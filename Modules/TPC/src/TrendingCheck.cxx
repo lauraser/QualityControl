@@ -9,18 +9,19 @@
 // or submit itself to any jurisdiction.
 
 ///
-/// \file   PIDClusterCheck.cxx
+/// \file   TrendingCheck.cxx
 /// \author Laura Serksnyte
 ///
 #include <iostream>
 
-#include "TPC/PIDClusterCheck.h"
+#include "TPC/TrendingCheck.h"
 #include "QualityControl/MonitorObject.h"
 #include "QualityControl/Quality.h"
 
 #include <fairlogger/Logger.h>
 // ROOT
-#include <TH1.h>
+#include <TCanvas.h>
+#include <TGraph.h>
 #include <TList.h>
 #include <TPaveText.h>
 
@@ -29,34 +30,52 @@ using namespace std;
 namespace o2::quality_control_modules::tpc
 {
 
-void PIDClusterCheck::configure(std::string) {}
+void TrendingCheck::configure(std::string) {}
 
-Quality PIDClusterCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>>* moMap)
+Quality TrendingCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>>* moMap)
 {
   auto mo = moMap->begin()->second;
   Quality result = Quality::Null;
+  std::cout<<"START IF STATEMENT"<<std::endl;
 
-  // Check if the number of clusters is smaller than 159.
-  //force rebuild
-  if (mo->getName() == "hNClusters") {
-    auto* h = dynamic_cast<TH1F*>(mo->getObject());
-    result = Quality::Good;
-    for (int i = 0; i < h->GetNbinsX(); i++) {
-      if (h->GetBinContent(i) > 0 && h->GetBinCenter(i) > 159) {
-        result = Quality::Bad;
-      }
+  if (mo->getName() == "TPCncl_StatMean_Trend_AfterCuts") {
+    auto* canv = dynamic_cast<TCanvas*>(mo->getObject());
+    //canv->ls();
+    TGraph *h = (TGraph*)canv->GetListOfPrimitives()->FindObject("Graph");
+    float NBins = h->GetN();
+    std::cout<<NBins<<std::endl;
+    double mean = h->GetMean(2);
+    double RMS = h->GetRMS(2);
+    std::cout<<"mean: "<<mean<<" RMS:"<<RMS<<std::endl;
+    for( int i = 0;i<NBins;i++){
+      double x=0., y=0.;
+      h->GetPoint(i,x,y);
+      std::cout<<i<<" x:"<<x<<"  y:"<<y<<std::endl;
+    }
+    double xlast=0., ylast=0.;
+    h->GetPoint(NBins-1,xlast,ylast);
+    if((ylast-mean)<RMS*3.){
+      result = Quality::Medium;
+    }
+    else{
+      result = Quality::Bad;
     }
   }
+  std::cout<<"FINISH IF STATEMENT"<<std::endl;
+
+
 
   return result;
 }
 
-std::string PIDClusterCheck::getAcceptedType() { return "TH1"; }
+std::string TrendingCheck::getAcceptedType() { return "TCanvas"; }
 
-void PIDClusterCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkResult)
+void TrendingCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkResult)
 {
-  auto* h = dynamic_cast<TH1F*>(mo->getObject());
-
+  //std::cout<<"START TRENDING"<<std::endl;
+  auto* c1 = dynamic_cast<TCanvas*>(mo->getObject());
+  TGraph *h = (TGraph*)c1->GetListOfPrimitives()->FindObject("Graph");
+  //std::cout<<"AFTER DYNAMIC CAST"<<std::endl;
   TPaveText* msg = new TPaveText(0.5, 0.5, 0.9, 0.75, "NDC");
   h->GetListOfFunctions()->Add(msg);
   msg->SetName(Form("%s_msg", mo->GetName()));
@@ -88,6 +107,9 @@ void PIDClusterCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkR
     h->SetFillColor(0);
   }
   h->SetLineColor(kBlack);
+
+  std::cout<<"FINISH TRENDING"<<std::endl;
 }
+  
 
 } // namespace o2::quality_control_modules::tpc

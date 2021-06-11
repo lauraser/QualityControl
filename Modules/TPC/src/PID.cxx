@@ -53,6 +53,7 @@ void PID::initialize(o2::framework::InitContext& /*ctx*/)
   for (auto& hist : mQCPID.getHistograms2D()) {
     getObjectsManager()->startPublishing(&hist);
     getObjectsManager()->addMetadata(hist.GetName(), "custom", "43");
+  
   }
 }
 

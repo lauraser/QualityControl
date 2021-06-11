@@ -11,7 +11,8 @@ target_sources(O2QcTPC PRIVATE src/PID.cxx
                              src/Clusters.cxx
                              src/CalDetPublisher.cxx
                              src/Utility.cxx
-                             src/RawDigits.cxx)
+                             src/RawDigits.cxx
+                             src/TrendingCheck.cxx)
 
 target_include_directories(
   O2QcTPC
@@ -38,6 +39,7 @@ add_root_dictionary(O2QcTPC
                             include/TPC/CalDetPublisher.h
                             include/TPC/Utility.h
                             include/TPC/RawDigits.h
+                            include/TPC/TrendingCheck.h
                     LINKDEF include/TPC/LinkDef.h
                     BASENAME O2QcTPC)
 
@@ -96,4 +98,5 @@ install(FILES run/tpcQCPID_sampled.json
               run/tpcQCTrackingFromExternal_direct.json
               run/tpcQCCalDetPublisher.json
               run/tpcQCRawDigits_direct.json
+              run/tpcQCCheckerOfTrends.json
         DESTINATION etc)
