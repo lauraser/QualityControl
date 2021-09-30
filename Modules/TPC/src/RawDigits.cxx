@@ -1,9 +1,8 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
+// Copyright CERN and copyright holders of ALICE O2. This software is
+// distributed under the terms of the GNU General Public License v3 (GPL
+// Version 3), copied verbatim in the file "COPYING".
 //
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+// See http://alice-o2.web.cern.ch/license for full licensing information.
 //
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
@@ -46,6 +45,7 @@ void RawDigits::initialize(o2::framework::InitContext& /*ctx*/)
 
   for (auto& wrapper : mWrapperVector) {
     getObjectsManager()->startPublishing(&wrapper);
+    getObjectsManager()->addMetadata(wrapper.getObj()->getName().data(), "custom", "87");
   }
 
   mRawReader.setLinkZSCallback([this](int cru, int rowInSector, int padInRow, int timeBin, float adcValue) -> bool {
@@ -71,9 +71,14 @@ void RawDigits::monitorData(o2::framework::ProcessingContext& ctx)
 
   mRawDigitQC.analyse();
 
-  fillCanvases(mRawDigitQC.getNClusters(), mNRawDigitsCanvasVec, mCustomParameters, "NRawDigits");
-  fillCanvases(mRawDigitQC.getQMax(), mQMaxCanvasVec, mCustomParameters, "Qmax");
-  fillCanvases(mRawDigitQC.getTimeBin(), mTimeBinCanvasVec, mCustomParameters, "TimeBin");
+  auto vecPtrNRawDigits = toVector(mNRawDigitsCanvasVec);
+  o2::tpc::painter::makeSummaryCanvases(mRawDigitQC.getNClusters(), 300, 0, 0, true, &vecPtrNRawDigits);
+
+  auto vecPtrQMax = toVector(mQMaxCanvasVec);
+  o2::tpc::painter::makeSummaryCanvases(mRawDigitQC.getQMax(), 300, 0, 0, true, &vecPtrQMax);
+
+  auto vecPtrTimeBin = toVector(mTimeBinCanvasVec);
+  o2::tpc::painter::makeSummaryCanvases(mRawDigitQC.getTimeBin(), 300, 0, 0, true, &vecPtrTimeBin);
 }
 
 void RawDigits::endOfCycle()
@@ -91,10 +96,6 @@ void RawDigits::reset()
   // clean all the monitor objects here
 
   QcInfoLogger::GetInstance() << "Resetting the histogram" << AliceO2::InfoLogger::InfoLogger::endm;
-
-  clearCanvases(mNRawDigitsCanvasVec);
-  clearCanvases(mQMaxCanvasVec);
-  clearCanvases(mTimeBinCanvasVec);
 }
 
 } // namespace o2::quality_control_modules::tpc

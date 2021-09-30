@@ -1,9 +1,8 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
+// Copyright CERN and copyright holders of ALICE O2. This software is
+// distributed under the terms of the GNU General Public License v3 (GPL
+// Version 3), copied verbatim in the file "COPYING".
 //
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+// See http://alice-o2.web.cern.ch/license for full licensing information.
 //
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
@@ -36,14 +35,35 @@ using namespace o2::quality_control::postprocessing;
 namespace o2::quality_control_modules::tpc
 {
 
+const std::unordered_map<std::string, outputCalPad> OutputMapCalPad{
+  { "Pedestal", outputCalPad::Pedestal },
+  { "Noise", outputCalPad::Noise }
+};
+
+const std::unordered_map<std::string, outputCalPadMap> OutputMapCalPadMap{
+  { "PedestalNoise", outputCalPadMap::NoPe },
+  { "Pulser", outputCalPadMap::Pulser },
+  { "CE", outputCalPadMap::CE }
+};
+
 void CalDetPublisher::configure(std::string name, const boost::property_tree::ptree& config)
 {
   for (const auto& output : config.get_child("qc.postprocessing." + name + ".outputCalPadMaps")) {
-    mOutputListMap.emplace_back(output.second.data());
+    try {
+      OutputMapCalPadMap.at(output.second.data());
+      mOutputListMap.emplace_back(output.second.data());
+    } catch (std::out_of_range&) {
+      throw std::invalid_argument(std::string("Invalid output CalDet map object specified in config: ") + output.second.data());
+    }
   }
 
   for (const auto& output : config.get_child("qc.postprocessing." + name + ".outputCalPads")) {
-    mOutputList.emplace_back(output.second.data());
+    try {
+      OutputMapCalPad.at(output.second.data());
+      mOutputList.emplace_back(output.second.data());
+    } catch (std::out_of_range&) {
+      throw std::invalid_argument(std::string("Invalid output CalDet object specified in config: ") + output.second.data());
+    }
   }
 
   for (const auto& timestamp : config.get_child("qc.postprocessing." + name + ".timestamps")) {
@@ -66,7 +86,7 @@ void CalDetPublisher::configure(std::string name, const boost::property_tree::pt
     }
     auto vecIter = 0;
     if ((keyVec.size() > 0) && (keyVec.size() == valueVec.size())) {
-      for (const auto& key : keyVec) {
+      for (auto& key : keyVec) {
         mLookupMaps.back().insert(std::pair<std::string, std::string>(key, valueVec.at(vecIter)));
         vecIter++;
       }
@@ -92,7 +112,7 @@ void CalDetPublisher::configure(std::string name, const boost::property_tree::pt
     }
     auto vecIter = 0;
     if ((keyVec.size() > 0) && (keyVec.size() == valueVec.size())) {
-      for (const auto& key : keyVec) {
+      for (auto& key : keyVec) {
         mStoreMaps.back().insert(std::pair<std::string, std::string>(key, valueVec.at(vecIter)));
         vecIter++;
       }
@@ -112,9 +132,9 @@ void CalDetPublisher::configure(std::string name, const boost::property_tree::pt
   //if(std::find(mOutputListMap.begin(), mOutputListMap.end(), "PedestalNoise") != mOutputListMap.end()) { mCheckZSPrereq = true; }
 
   for (const auto& entry : config.get_child("qc.postprocessing." + name + ".histogramRanges")) {
-    for (const auto& type : entry.second) {
-      for (const auto& value : type.second) {
-        mRanges[type.first].emplace_back(std::stof(value.second.data()));
+    for (auto& type : entry.second) {
+      for (auto& value : type.second) {
+        mRanges[type.first].emplace_back(std::stoi(value.second.data()));
       }
     }
   }
@@ -141,11 +161,11 @@ void CalDetPublisher::configure(std::string name, const boost::property_tree::pt
 void CalDetPublisher::initialize(Trigger, framework::ServiceRegistry&)
 {
   auto calDetIter = 0;
-  for (const auto& type : mOutputListMap) {
+  for (auto& type : mOutputListMap) {
     auto& calMap = o2::tpc::CDBInterface::instance().getSpecificObjectFromCDB<std::unordered_map<std::string, o2::tpc::CalDet<float>>>(fmt::format("TPC/Calib/{}", type).data(),
                                                                                                                                        -1,
                                                                                                                                        std::map<std::string, std::string>());
-    for (const auto& item : calMap) {
+    for (auto& item : calMap) {
       mCalDetCanvasVec.emplace_back(std::vector<std::unique_ptr<TCanvas>>());
       addAndPublish(getObjectsManager(),
                     mCalDetCanvasVec.back(),
@@ -157,7 +177,7 @@ void CalDetPublisher::initialize(Trigger, framework::ServiceRegistry&)
     calDetIter++;
   }
 
-  for (const auto& type : mOutputList) {
+  for (auto& type : mOutputList) {
     mCalDetCanvasVec.emplace_back(std::vector<std::unique_ptr<TCanvas>>());
     addAndPublish(getObjectsManager(),
                   mCalDetCanvasVec.back(),
@@ -198,14 +218,14 @@ void CalDetPublisher::update(Trigger t, framework::ServiceRegistry&)
 
   auto calDetIter = 0;
   auto calVecIter = 0;
-  for (const auto& type : mOutputListMap) {
+  for (auto& type : mOutputListMap) {
     auto& calMap = o2::tpc::CDBInterface::instance().getSpecificObjectFromCDB<std::unordered_map<std::string, o2::tpc::CalDet<float>>>(
       fmt::format("TPC/Calib/{}", type).data(),
       mTimestamps.size() > 0 ? mTimestamps.at(calVecIter) : -1,
       mLookupMaps.size() > 1 ? mLookupMaps.at(calVecIter) : mLookupMaps.at(0));
-    for (const auto& item : calMap) {
+    for (auto& item : calMap) {
       auto vecPtr = toVector(mCalDetCanvasVec.at(calDetIter));
-      o2::tpc::painter::makeSummaryCanvases(item.second, int(mRanges[item.second.getName()].at(0)), mRanges[item.second.getName()].at(1), mRanges[item.second.getName()].at(2), true, &vecPtr);
+      o2::tpc::painter::makeSummaryCanvases(item.second, mRanges[item.second.getName()].at(0), mRanges[item.second.getName()].at(1), mRanges[item.second.getName()].at(2), true, &vecPtr);
       calDetIter++;
     }
     calVecIter++;
@@ -221,7 +241,7 @@ void CalDetPublisher::update(Trigger t, framework::ServiceRegistry&)
           mRefNoise = std::make_unique<o2::tpc::CalDet<float>>(calMap["Noise"]);
           ILOG(Info, Support) << "New reference noise file set!" << ENDM;
 
-          for (const auto& canvasVec : mCalDetCanvasVec) {
+          for (auto& canvasVec : mCalDetCanvasVec) {
             for (auto& canvas : canvasVec) {
               if (canvas->GetName() == std::string("c_Sides_Pedestal")) {
                 canvas->cd(3);
@@ -234,12 +254,12 @@ void CalDetPublisher::update(Trigger t, framework::ServiceRegistry&)
     }*/
   }
 
-  for (const auto& type : mOutputList) {
+  for (auto& type : mOutputList) {
     auto& calDet = o2::tpc::CDBInterface::instance().getSpecificObjectFromCDB<o2::tpc::CalDet<float>>(fmt::format("TPC/Calib/{}", type).data(),
                                                                                                       mTimestamps.size() > 0 ? mTimestamps.at(calDetIter) : -1,
                                                                                                       mLookupMaps.size() > 1 ? mLookupMaps.at(calDetIter) : mLookupMaps.at(0));
     auto vecPtr = toVector(mCalDetCanvasVec.at(calDetIter));
-    o2::tpc::painter::makeSummaryCanvases(calDet, int(mRanges[calDet.getName()].at(0)), mRanges[calDet.getName()].at(1), mRanges[calDet.getName()].at(2), true, &vecPtr);
+    o2::tpc::painter::makeSummaryCanvases(calDet, mRanges[calDet.getName()].at(0), mRanges[calDet.getName()].at(1), mRanges[calDet.getName()].at(2), true, &vecPtr);
     calDetIter++;
 
     /// This will be removed when Pedestal and Noise are stored in a unordered_map
@@ -258,8 +278,8 @@ void CalDetPublisher::update(Trigger t, framework::ServiceRegistry&)
         mRefNoise.reset(nullptr);
         mRefNoise = std::make_unique<o2::tpc::CalDet<float>>(calDet);
         ILOG(Info, Support) << "New reference noise file set!" << ENDM;
-        for (const auto& canvasVec : mCalDetCanvasVec) {
-          for (const auto& canvas : canvasVec) {
+        for (auto& canvasVec : mCalDetCanvasVec) {
+          for (auto& canvas : canvasVec) {
             if (canvas->GetName() == std::string("c_Sides_Pedestal")) {
               canvas->cd(3);
               mNewZSCalibMsg->Draw();
@@ -274,8 +294,8 @@ void CalDetPublisher::update(Trigger t, framework::ServiceRegistry&)
 
 void CalDetPublisher::finalize(Trigger, framework::ServiceRegistry&)
 {
-  for (const auto& calDetCanvasVec : mCalDetCanvasVec) {
-    for (const auto& canvas : calDetCanvasVec) {
+  for (auto& calDetCanvasVec : mCalDetCanvasVec) {
+    for (auto& canvas : calDetCanvasVec) {
       getObjectsManager()->stopPublishing(canvas.get());
     }
   }

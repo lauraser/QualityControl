@@ -9,29 +9,29 @@
 // or submit itself to any jurisdiction.
 
 ///
-/// \file   PIDClusterCheck.h
+/// \file   cluster2DCheck.h
 /// \author Laura Serksnyte
 ///
 
-#ifndef QC_MODULE_TPC_PIDCLUSTERCHECK_H
-#define QC_MODULE_TPC_PIDCLUSTERCHECK_H
+#ifndef QC_MODULE_TPC_cluster2DCheck_H
+#define QC_MODULE_TPC_cluster2DCheck_H
 
 #include "QualityControl/CheckInterface.h"
 
 namespace o2::quality_control_modules::tpc
 {
 
-/// \brief  Check whether the cluster number for a track is smaller than 159 in PID task.
+/// \brief  Check whether the cluster number for a track is smaller than 40 or 20 in Track task.
 ///
 /// \author Laura Serksnyte
-class PIDClusterCheck : public o2::quality_control::checker::CheckInterface
+class cluster2DCheck : public o2::quality_control::checker::CheckInterface
 {
 
  public:
   /// Default constructor
-  PIDClusterCheck() = default;
+  cluster2DCheck() = default;
   /// Destructor
-  ~PIDClusterCheck() override = default;
+  ~cluster2DCheck() override = default;
 
   // Override interface
   void configure(std::string name) override;
@@ -40,9 +40,11 @@ class PIDClusterCheck : public o2::quality_control::checker::CheckInterface
   std::string getAcceptedType() override;
 
  private:
-  ClassDefOverride(PIDClusterCheck, 1);
+  ClassDefOverride(cluster2DCheck, 1);
+  std::vector<std::string> badSectorsName;
+  std::vector<Quality> badSectorsQuality;
 };
 
 } // namespace o2::quality_control_modules::tpc
 
-#endif // QC_MODULE_TPC_PIDCLUSTERCHECK_H
+#endif // QC_MODULE_TPC_cluster2DCheck_H

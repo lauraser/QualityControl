@@ -1,9 +1,8 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
+// Copyright CERN and copyright holders of ALICE O2. This software is
+// distributed under the terms of the GNU General Public License v3 (GPL
+// Version 3), copied verbatim in the file "COPYING".
 //
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+// See http://alice-o2.web.cern.ch/license for full licensing information.
 //
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
@@ -31,6 +30,7 @@
 
 namespace o2::quality_control_modules::tpc
 {
+  // for building
 
 PID::PID() : TaskInterface() {}
 
@@ -45,7 +45,7 @@ void PID::initialize(o2::framework::InitContext& /*ctx*/)
   mQCPID.initializeHistograms();
   //o2::tpc::qc::helpers::setStyleHistogram1D(mQCPID.getHistograms1D());
   o2::tpc::qc::helpers::setStyleHistogram2D(mQCPID.getHistograms2D());
-
+//r
   for (auto& hist : mQCPID.getHistograms1D()) {
     getObjectsManager()->startPublishing(&hist);
     getObjectsManager()->addMetadata(hist.GetName(), "custom", "34");
@@ -54,6 +54,7 @@ void PID::initialize(o2::framework::InitContext& /*ctx*/)
   for (auto& hist : mQCPID.getHistograms2D()) {
     getObjectsManager()->startPublishing(&hist);
     getObjectsManager()->addMetadata(hist.GetName(), "custom", "43");
+  
   }
 }
 

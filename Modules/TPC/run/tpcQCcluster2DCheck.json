@@ -41,16 +41,16 @@
       }
     },
     "checks": {
-      "QcCheckClusters": {
+      "cluster2DCheck": {
         "active": "true",
-        "className": "o2::quality_control_modules::skeleton::SkeletonCheck",
-        "moduleName": "QcSkeleton",
-        "policy": "OnAny",
+        "className": "o2::quality_control_modules::tpc::cluster2DCheck",
+        "moduleName": "QcTPC",
+        "policy": "OnEachSeparately",
         "detectorName": "TPC",
         "dataSource": [{
           "type": "Task",
           "name": "Clusters",
-          "MOs": ["example"]
+          "MOs": ["c_ROCs_N_Clusters_2D"]
         }]
       }
     }

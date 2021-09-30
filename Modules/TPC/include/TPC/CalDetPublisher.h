@@ -1,9 +1,8 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
+// Copyright CERN and copyright holders of ALICE O2. This software is
+// distributed under the terms of the GNU General Public License v3 (GPL
+// Version 3), copied verbatim in the file "COPYING".
 //
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+// See http://alice-o2.web.cern.ch/license for full licensing information.
 //
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
@@ -28,6 +27,19 @@ class TPaveText;
 
 namespace o2::quality_control_modules::tpc
 {
+
+/// \brief Valid CalDet objects
+/// This struct contains the valid CalDet objects to be fetched from the CCDB
+enum struct outputCalPad { Pedestal,
+                           Noise
+};
+
+/// \brief Valid vectors of CalDet objects
+/// This struct contains the valid std::unordered_maps of CalDet objects to be fetched from the CCDB
+enum struct outputCalPadMap { NoPe,
+                              Pulser,
+                              CE
+};
 
 /// \brief Quality Control task for the calibration data of the TPC
 /// \author Thomas Klemenz
@@ -78,7 +90,17 @@ class CalDetPublisher final : public quality_control::postprocessing::PostProces
   long mInitRefPedestalTimestamp;                                        ///< timestamp of the pedestal data used at init of the task
   long mInitRefNoiseTimestamp;                                           ///< timestamp of the noise data used at init of the task
   TPaveText* mNewZSCalibMsg = nullptr;                                   ///< badge to indicate the necessity to upload new calibration data for ZS
-  std::unordered_map<std::string, std::vector<float>> mRanges;           ///< histogram ranges configurable via config file
+
+  std::unordered_map<std::string, std::vector<int>> mRanges{ ///< histogram ranges configurable via config file
+                                                             { "Pedestals", {} },
+                                                             { "Noise", {} },
+                                                             { "PulserQtot", {} },
+                                                             { "PulserT0", {} },
+                                                             { "PulserWidth", {} },
+                                                             { "CEQtot", {} },
+                                                             { "CET0", {} },
+                                                             { "CEWidth", {} }
+  };
 };
 
 } // namespace o2::quality_control_modules::tpc

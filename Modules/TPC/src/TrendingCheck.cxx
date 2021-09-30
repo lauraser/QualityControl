@@ -9,55 +9,86 @@
 // or submit itself to any jurisdiction.
 
 ///
-/// \file   TrackClusterCheck.cxx
+/// \file   TrendingCheck.cxx
 /// \author Laura Serksnyte
 ///
-#include <iostream>
 
-#include "TPC/TrackClusterCheck.h"
+
+#include "TPC/TrendingCheck.h"
 #include "QualityControl/MonitorObject.h"
 #include "QualityControl/Quality.h"
 
 #include <fairlogger/Logger.h>
 // ROOT
-#include <TH1.h>
+#include <TCanvas.h>
+#include <TGraph.h>
 #include <TList.h>
 #include <TPaveText.h>
+
+#include <iostream>
+//#include <boost/accumulators/accumulators.hpp>
+//#include <boost/accumulators/statistics.hpp>
+#include <vector>
+#include <numeric>
+//#include <functional>
 
 using namespace std;
 
 namespace o2::quality_control_modules::tpc
 {
 
-void TrackClusterCheck::configure(std::string) {}
-
-Quality TrackClusterCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>>* moMap)
+void TrendingCheck::configure(std::string) {}
+Quality TrendingCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>>* moMap)
 {
   auto mo = moMap->begin()->second;
   Quality result = Quality::Null;
+  std::cout<<"START IF STATEMENT"<<std::endl;
 
-  // Check whether the cluster number for a track is smaller than 40 or 20 in Track task.
-  if (mo->getName() == "hNClustersBeforeCuts") {
-    auto* h = dynamic_cast<TH1F*>(mo->getObject());
-    result = Quality::Good;
-    for (int i = 0; i < h->GetNbinsX(); i++) {
-      if (h->GetBinContent(i) > 0 && h->GetBinCenter(i) < 20) {
-        result = Quality::Bad;
-      } else if (h->GetBinContent(i) > 0 && h->GetBinCenter(i) < 40 && h->GetBinCenter(i) > 20 && result != Quality::Bad) {
-        result = Quality::Medium;
-      }
+  if (mo->getName() == "TPCncl_StatMean_Trend_AfterCuts") {
+    auto* canv = dynamic_cast<TCanvas*>(mo->getObject());
+    TGraph *h = (TGraph*)canv->GetListOfPrimitives()->FindObject("Graph");
+
+    const int NBins = h->GetN();
+    double x_last=0., y_last=0.;
+    h->GetPoint(NBins-1,x_last,y_last);
+    double * yValues = h->GetY();
+    vector<double> v(yValues, yValues + NBins-1);
+
+    double sum = std::accumulate(v.begin(), v.end(), 0.0);
+    double mean = sum / v.size();
+
+    std::vector<double> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(), [mean](double x) { return x - mean; });
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev = std::sqrt(sq_sum / v.size());
+
+    std::cout << mean << std::endl;
+    std::cout << stdev << std::endl;
+
+   
+    if((y_last-mean)<stdev*3.){
+      result = Quality::Good;
+    }
+    else{
+      result = Quality::Bad;
     }
   }
+
+  std::cout<<"FINISH IF STATEMENT"<<std::endl;
+
+
 
   return result;
 }
 
-std::string TrackClusterCheck::getAcceptedType() { return "TH1"; }
+std::string TrendingCheck::getAcceptedType() { return "TCanvas"; }
 
-void TrackClusterCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkResult)
+void TrendingCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkResult)
 {
-  auto* h = dynamic_cast<TH1F*>(mo->getObject());
-
+  //std::cout<<"START TRENDING"<<std::endl;
+  auto* c1 = dynamic_cast<TCanvas*>(mo->getObject());
+  TGraph *h = (TGraph*)c1->GetListOfPrimitives()->FindObject("Graph");
+  //std::cout<<"AFTER DYNAMIC CAST"<<std::endl;
   TPaveText* msg = new TPaveText(0.5, 0.5, 0.9, 0.75, "NDC");
   h->GetListOfFunctions()->Add(msg);
   msg->SetName(Form("%s_msg", mo->GetName()));
@@ -89,6 +120,9 @@ void TrackClusterCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality chec
     h->SetFillColor(0);
   }
   h->SetLineColor(kBlack);
+
+  std::cout<<"FINISH TRENDING"<<std::endl;
 }
+  
 
 } // namespace o2::quality_control_modules::tpc
