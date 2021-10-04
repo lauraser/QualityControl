@@ -66,7 +66,7 @@ Quality TrendingCheck::check(std::map<std::string, std::shared_ptr<MonitorObject
     std::cout << stdev << std::endl;
 
    
-    if((y_last-mean)<stdev*3.){
+    if((y_last-mean)<=stdev*3.){
       result = Quality::Good;
     }
     else{
