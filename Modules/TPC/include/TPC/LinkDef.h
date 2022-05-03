@@ -23,8 +23,10 @@
 #pragma link C++ class o2::quality_control_modules::tpc::TH1ReductorTPC+;
 #pragma link C++ class o2::quality_control_modules::tpc::TH2ReductorTPC+;
 #pragma link C++ class o2::quality_control_modules::tpc::CheckForEmptyPads+;
+#pragma link C++ class o2::quality_control_modules::tpc::TPCAggregator+;
 
 #pragma link C++ function o2::quality_control_modules::tpc::addAndPublish + ;
 #pragma link C++ function o2::quality_control_modules::tpc::toVector + ;
 #pragma link C++ function o2::quality_control_modules::tpc::clusterHandler + ;
+
 #endif

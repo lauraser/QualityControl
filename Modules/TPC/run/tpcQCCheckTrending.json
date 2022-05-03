@@ -70,6 +70,24 @@
         }
       }
      },
+    "aggregators": {
+      "MyAggregator1": {
+        "active": "true",
+        "className": "o2::quality_control_modules::tpc::TPCAggregator",
+        "moduleName": "QcTPC",
+        "policy": "OnAll",
+        "detectorName": "TPC",
+        "dataSource": [{
+            "type": "Check",   "": "for a check which produces a single result do it like that",
+            "name": "CheckOfPID_Trending", "": "no need to specify each object because there is only 1",
+            "stopTrigger_comment": [ "Like this it takes all checks from there, if want to use only specific checks : QOs: [QcTask/example]" ]
+          },
+          {
+            "type": "Check",   "": "for a check which produces a single result do it like that",
+            "name": "CheckOfTrack_Trending", "": "no need to specify each object because there is only 1"
+          }]
+      }
+    },
     "postprocessing": {
       "PID_Trending": {
         "active": "true",
