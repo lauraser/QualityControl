@@ -46,11 +46,7 @@ std::map<std::string, Quality> TPCAggregator::aggregate(QualityObjectsMapType& q
   ILOG(Info, Devel) << "   result: " << current << ENDM;
   result["newQuality"] = current;
 
-  /*
-  // add one more
-  Quality plus = Quality::Medium;
-  result["another"] = plus
-  */
+
   return result;
 }
 } // namespace o2::quality_control_modules::skeleton
